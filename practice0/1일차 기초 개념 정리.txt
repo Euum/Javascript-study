@@ -1,0 +1,143 @@
+# 실행 컨텍스트(execution context)의 개념 ------------------------------------------------------------
+
+ 실행 컨텍스트(execution)는 scope, hoisting, this, function, closure 등의 동작 원리를 담고 있는
+자바스크립트의 핵심원리이다. 
+
+ ECMAScript 스펙에 따르면 실행 컨텍스트를 실행 가능한 코드를 형상화하고 구분하는 추상적인 개념
+이라고 정의한다. -> 실행 컨텍스트는 실행 가능한 코드가 실행되기 위해 필요한 환경이라고 할 수 있다.
+
+ 자바스크립트 엔진은 코드를 실행하기 위하여 실행에 필요한 여러가지 정보를 알고 있어야 한다. 실행에
+필요한 여러가지 정보란 아래와 같은 것들이다.
++ 변수: 전역 변수, 지역 변수, 매개 변수, 객체의 프로퍼티
++ 함수 선언
++ 변수의 유효 범위(scope)
++ this
+
+ 이와 같은 실행에 필요한 정보를 형상화 하고 구분하기 위해 JS엔진은 실행 컨텍스트를 "물리 객체"의
+형태로 관리한다. 아래의 예시를 확인하자.
+
+/**************************************************************
+
+var x = 'xxx';
+function foo()
+{
+    var y = 'yyy';
+
+    function bar()
+    {
+        var z = 'zzz';
+        console.log(x + y + z);
+    }
+    bar();
+}
+foo();
+
+// 함수 호출시 동작은 다른 언어와 다를 것 없다. 논리적 스택 구조를 확인해보자. 
+//
+// |         |    |         |    |bar() EC |    |         |    |         |
+// |         |    |foo() EC |    |foo() EC |    |foo() EC |    |         |
+// |global EC|    |global EC|    |global EC|    |global EC|    |global EC|
+// |_________| -> |_________| -> |_________| -> |_________| -> |_________|
+**************************************************************/
+
+<컨텍스트의 생성과 순서>
+    컨텍스트의 종류
+    + 전역 실행 컨텍스트
+        - 가장 기본이 되는 실행 컨텍스트, 스크립트가 처음 실행되면 생성됨.
+        - 코드 전체의 정보를 가짐.
+    + 함수 실행 컨텍스트
+        - 함수가 호출되면 함수컨텍스트가 생성됩니다.
+    + Eval 실행 컨텍스트 (Eval은 사용하지 않을 것을 권고)
+
+    실행 컨텍스트의 생성과정
+    + Creation Phase
+        + LexicalEnvironment 생성 (this binding을 포함함.)
+            - 함수 선언과 변수(let, const)의 "바인딩"을 저장, 값이 아닌 변수명에 대한 매핑임!!
+            + Environment Record
+                - Declaritve environment record: 식별자들을 저장(변수, 함수, 인수)
+                - Object environment record: 글로벌 바인딩 객체(객체간 상관관계)를 저장.
+            + Reference to the outer environment
+                - Outer lexical environment로의 접근을 의미한다.
+                - 현재 컨텍스트에서 변수, 함수 등을 찾지 못하면 상위 컨텍스트에 접근한다는 뜻.
+            - This binding: this의 값. 전역 컨텍스트에서는 글로벌, 윈도우로 설정 됨.(엄격 모드에서는 undefined)
+        
+        - VariableEnvironment 생성: 변수 var의 바인딩만 저장 
+       
+    + Execution Phase
+        - 모든 변수에 대한 할당이 수행되고 코드가 최종적으로 실행 됨.
+
+<실행 컨텍스트의 추상적 형태>
+/**************************************************************
+GlobalExecutionContext = {
+    LexicalEnvironment: {
+        EnvironmentRecord: {
+            Type: "Object",
+            // Identifier bindings go here
+        },
+        outer: <null>,
+        this: <global objecT>
+    }
+}
+
+FunctionExecutionContext = {
+    LexicalEnvironment: {
+        EnvironmentRecord: {
+            Type: "Declaritve",
+            // Identifier binding go here
+        }
+        outer: <Global or outer function environment reference>,
+        this: <depends on how function is called>
+    }
+}
+
+**************************************************************/
+
+# 클로저(closure)의 개념 -----------------------------------------------------------------------------
+
+ 클로저는 자바스크립트 고유의 개념이 아닌, 함수를 일급 객체로 취급하는 함수형 프로그래밍 언어에서
+사용되는 중요한 특성이다. (Functional Programming language: Erlang, Scala, Haskell, Lisp... 등)
+
+ 다음은 MDN에서 정의하는 클로저에 대한 개념이다. 
+"A closure is the combination of a function bundled together (enclosed)
+with references to its surrounding state (the lexical environment)."
+대충 직역하면, 클로저라고 하는 것은 "함수와 그 주변 환경(렉시컬 환경)에 대한 참조의 조합"을 의미한다.
+즉, 함수가 어디에서 선언되었는지에 따라 참조 가능한 변수들이 달라진다는 것을 의미한다.
+
+/**************************************************************
+// innerFoo는 outerFoo의 내부에 존재하기 때문에 innerFoo의 
+// 상위 스코프에 있는 변수나 함수를 참조 할 수 있다.
+// 이를, "렉시컬 스코핑(lexical scoping)"이라 한다.
+
+function outerFoo()
+{
+    var x = 10;
+    var innerFoo = function(){ console.log(x); };
+    innerFoo(); // x = 10
+}
+// 실행 컨텍스트 관점에서 보면 위의 코드는 다음으로 설명 가능하다.
+// 1. innerFoo는 FunctionExecutionContext 중 EnvironmentRecord의 정보에서 x를 찾는다.
+// 2. EnvironmentRecord에 x에 대한 정보가 없으므로 outer lexical environment에서 x를 찾는다.
+// 3. 검색에 성공하였으므로 x의 값을 출력한다.
+**************************************************************/
+
+이번엔 위의 코드를 outerFunc에서 호출하는 것이 아니라 반환하도록 변경해본다.
+
+/**************************************************************
+function outerFoo()
+{
+    var x = 10;
+    var innerFoo = function(){ console.log(x); };
+    return innerFoo;
+}
+
+// 함수 outerFoo를 호출하면 내부 함수 innerFunc가 반환된다.
+// 함수 outerFoo의 호출이 끝나면 outerFoo에 대한 컨텍스트는 소멸한다.
+var inner = outerFoo();
+
+// outerFoo의 컨텍스트는 종료되었지만, x의 값은 정상적으로 출력된다.
+inner();
+
+**************************************************************/
+이 처럼, 자신을 포함하고 있는 외부함수보다 내부함수가 더 오래 유지되는 경우,
+외부 함수 밖에서 내부함수가 호출되더라도 외부함수의 지역 변수에 접근할 수 있는데,
+이러한 함수를 클로저(closure)라고 부른다.
