@@ -8,7 +8,7 @@ const name = "eum";
 const age = 29;
 const obj = {
     name : name,
-    age: age
+    age: age,
 };
 console.log(obj)
 
