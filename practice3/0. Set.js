@@ -13,10 +13,13 @@ mySet.add("eum");
 mySet.add("hong");
 mySet.add("eum");
 
+console.log(mySet);
 console.log(mySet.has("eum")) // true
 
 // 참조형이기 때문에 원본값이 변경되면 Set 내부에서도 바뀌어서 보임.
 arr[0] = "change";
+console.log(mySet);
+
 // 여기서 참조가 소실되도 Set의 arr은 GC의 대상이 아님 (깊은 참조)
 arr = null;
 
