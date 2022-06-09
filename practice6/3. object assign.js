@@ -51,6 +51,8 @@ const previousObj = {
     age: 20
 };
 
-const prev = Object.assign({}, prev, {
+const myObj = Object.assign({}, previousObj, {
+    age : 30
+});
 
-})
+console.log(previousObj === myObj);
